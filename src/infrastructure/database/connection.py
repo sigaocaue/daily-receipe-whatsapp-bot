@@ -43,10 +43,7 @@ _clean_url, _use_ssl = _normalize_database_url(settings.DATABASE_URL)
 
 _connect_args: dict = {}
 if _use_ssl:
-    _ctx = _ssl.create_default_context()
-    _ctx.check_hostname = False
-    _ctx.verify_mode = _ssl.CERT_NONE
-    _connect_args["ssl"] = _ctx
+    _connect_args["ssl"] = _ssl.create_default_context()
 
 engine = create_async_engine(_clean_url, echo=False, connect_args=_connect_args)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

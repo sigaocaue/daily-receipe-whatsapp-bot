@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 from src.domain.entities.recipe import Recipe
 from src.domain.repositories.recipe_repository import RecipeRepository
 from src.infrastructure.database.models.protein_model import ProteinModel
-from src.infrastructure.database.models.recipe_model import RecipeModel, recipe_proteins
+from src.infrastructure.database.models.recipe_model import RecipeModel
 
 
 class SQLAlchemyRecipeRepository(RecipeRepository):

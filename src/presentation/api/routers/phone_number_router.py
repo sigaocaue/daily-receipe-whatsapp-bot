@@ -1,0 +1,83 @@
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.domain.entities.phone_number import PhoneNumber
+from src.infrastructure.database.connection import get_session
+from src.infrastructure.database.repositories.sqlalchemy_phone_number_repository import (
+    SQLAlchemyPhoneNumberRepository,
+)
+from src.presentation.api.schemas.phone_number_schema import (
+    PhoneNumberCreate,
+    PhoneNumberResponse,
+    PhoneNumberUpdate,
+)
+
+router = APIRouter(prefix="/api/v1/phone-numbers", tags=["Phone Numbers"])
+
+
+def _get_repo(session: AsyncSession) -> SQLAlchemyPhoneNumberRepository:
+    return SQLAlchemyPhoneNumberRepository(session)
+
+
+@router.post("", response_model=dict)
+async def create_phone_number(
+    body: PhoneNumberCreate, session: AsyncSession = Depends(get_session)
+):
+    repo = _get_repo(session)
+    phone = PhoneNumber(name=body.name, phone=body.phone, active=body.active)
+    created = await repo.create(phone)
+    return {
+        "data": PhoneNumberResponse.model_validate(created.__dict__),
+        "message": "Phone number created",
+    }
+
+
+@router.get("", response_model=dict)
+async def list_phone_numbers(session: AsyncSession = Depends(get_session)):
+    repo = _get_repo(session)
+    phones = await repo.get_all()
+    return {
+        "data": [PhoneNumberResponse.model_validate(p.__dict__) for p in phones],
+        "message": "Phone numbers listed",
+    }
+
+
+@router.get("/{phone_id}", response_model=dict)
+async def get_phone_number(phone_id: UUID, session: AsyncSession = Depends(get_session)):
+    repo = _get_repo(session)
+    phone = await repo.get_by_id(phone_id)
+    if not phone:
+        raise HTTPException(status_code=404, detail="Phone number not found")
+    return {
+        "data": PhoneNumberResponse.model_validate(phone.__dict__),
+        "message": "Phone number found",
+    }
+
+
+@router.patch("/{phone_id}", response_model=dict)
+async def update_phone_number(
+    phone_id: UUID, body: PhoneNumberUpdate, session: AsyncSession = Depends(get_session)
+):
+    repo = _get_repo(session)
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        phone = await repo.get_by_id(phone_id)
+    else:
+        phone = await repo.update(phone_id, **updates)
+    if not phone:
+        raise HTTPException(status_code=404, detail="Phone number not found")
+    return {
+        "data": PhoneNumberResponse.model_validate(phone.__dict__),
+        "message": "Phone number updated",
+    }
+
+
+@router.delete("/{phone_id}", response_model=dict)
+async def delete_phone_number(phone_id: UUID, session: AsyncSession = Depends(get_session)):
+    repo = _get_repo(session)
+    deleted = await repo.delete(phone_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Phone number not found")
+    return {"data": None, "message": "Phone number deleted"}

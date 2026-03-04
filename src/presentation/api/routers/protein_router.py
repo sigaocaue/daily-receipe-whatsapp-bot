@@ -20,6 +20,7 @@ from src.presentation.api.schemas.protein_schema import (
     ProteinResponse,
     ProteinUpdate,
 )
+from src.presentation.api.schemas.response_schema import ApiResponse
 
 router = APIRouter(prefix="/api/v1/proteins", tags=["Proteins"])
 
@@ -28,7 +29,13 @@ def _get_repo(session: AsyncSession) -> SQLAlchemyProteinRepository:
     return SQLAlchemyProteinRepository(session)
 
 
-@router.post("", response_model=dict)
+@router.post(
+    "",
+    response_model=ApiResponse[ProteinResponse],
+    status_code=201,
+    summary="Criar proteína",
+    description="Cadastra uma nova proteína disponível para geração de receitas.",
+)
 async def create_protein(body: ProteinCreate, session: AsyncSession = Depends(get_session)):
     repo = _get_repo(session)
     use_case = CreateProteinUseCase(repo)
@@ -36,7 +43,12 @@ async def create_protein(body: ProteinCreate, session: AsyncSession = Depends(ge
     return {"data": ProteinResponse.model_validate(protein.__dict__), "message": "Protein created"}
 
 
-@router.get("", response_model=dict)
+@router.get(
+    "",
+    response_model=ApiResponse[list[ProteinResponse]],
+    summary="Listar proteínas",
+    description="Retorna todas as proteínas cadastradas.",
+)
 async def list_proteins(session: AsyncSession = Depends(get_session)):
     repo = _get_repo(session)
     use_case = ListProteinsUseCase(repo)
@@ -47,7 +59,13 @@ async def list_proteins(session: AsyncSession = Depends(get_session)):
     }
 
 
-@router.get("/{protein_id}", response_model=dict)
+@router.get(
+    "/{protein_id}",
+    response_model=ApiResponse[ProteinResponse],
+    summary="Buscar proteína por ID",
+    description="Retorna uma proteína específica pelo seu UUID.",
+    responses={404: {"description": "Proteína não encontrada"}},
+)
 async def get_protein(protein_id: UUID, session: AsyncSession = Depends(get_session)):
     repo = _get_repo(session)
     use_case = GetProteinUseCase(repo)
@@ -57,7 +75,13 @@ async def get_protein(protein_id: UUID, session: AsyncSession = Depends(get_sess
     return {"data": ProteinResponse.model_validate(protein.__dict__), "message": "Protein found"}
 
 
-@router.patch("/{protein_id}", response_model=dict)
+@router.patch(
+    "/{protein_id}",
+    response_model=ApiResponse[ProteinResponse],
+    summary="Atualizar proteína",
+    description="Atualiza parcialmente uma proteína existente (nome e/ou status ativo).",
+    responses={404: {"description": "Proteína não encontrada"}},
+)
 async def update_protein(
     protein_id: UUID, body: ProteinUpdate, session: AsyncSession = Depends(get_session)
 ):
@@ -71,7 +95,13 @@ async def update_protein(
     return {"data": ProteinResponse.model_validate(protein.__dict__), "message": "Protein updated"}
 
 
-@router.delete("/{protein_id}", response_model=dict)
+@router.delete(
+    "/{protein_id}",
+    response_model=ApiResponse[None],
+    summary="Excluir proteína",
+    description="Remove permanentemente uma proteína pelo seu UUID.",
+    responses={404: {"description": "Proteína não encontrada"}},
+)
 async def delete_protein(protein_id: UUID, session: AsyncSession = Depends(get_session)):
     repo = _get_repo(session)
     use_case = DeleteProteinUseCase(repo)

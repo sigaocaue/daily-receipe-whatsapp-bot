@@ -13,6 +13,7 @@ from src.presentation.api.schemas.phone_number_schema import (
     PhoneNumberResponse,
     PhoneNumberUpdate,
 )
+from src.presentation.api.schemas.response_schema import ApiResponse
 
 router = APIRouter(prefix="/api/v1/phone-numbers", tags=["Phone Numbers"])
 
@@ -21,7 +22,13 @@ def _get_repo(session: AsyncSession) -> SQLAlchemyPhoneNumberRepository:
     return SQLAlchemyPhoneNumberRepository(session)
 
 
-@router.post("", response_model=dict)
+@router.post(
+    "",
+    response_model=ApiResponse[PhoneNumberResponse],
+    status_code=201,
+    summary="Cadastrar número de telefone",
+    description="Adiciona um novo número de telefone como destinatário de receitas via WhatsApp.",
+)
 async def create_phone_number(
     body: PhoneNumberCreate, session: AsyncSession = Depends(get_session)
 ):
@@ -34,7 +41,12 @@ async def create_phone_number(
     }
 
 
-@router.get("", response_model=dict)
+@router.get(
+    "",
+    response_model=ApiResponse[list[PhoneNumberResponse]],
+    summary="Listar números de telefone",
+    description="Retorna todos os números de telefone cadastrados.",
+)
 async def list_phone_numbers(session: AsyncSession = Depends(get_session)):
     repo = _get_repo(session)
     phones = await repo.get_all()
@@ -44,7 +56,13 @@ async def list_phone_numbers(session: AsyncSession = Depends(get_session)):
     }
 
 
-@router.get("/{phone_id}", response_model=dict)
+@router.get(
+    "/{phone_id}",
+    response_model=ApiResponse[PhoneNumberResponse],
+    summary="Buscar número por ID",
+    description="Retorna um número de telefone específico pelo seu UUID.",
+    responses={404: {"description": "Número de telefone não encontrado"}},
+)
 async def get_phone_number(phone_id: UUID, session: AsyncSession = Depends(get_session)):
     repo = _get_repo(session)
     phone = await repo.get_by_id(phone_id)
@@ -56,7 +74,13 @@ async def get_phone_number(phone_id: UUID, session: AsyncSession = Depends(get_s
     }
 
 
-@router.patch("/{phone_id}", response_model=dict)
+@router.patch(
+    "/{phone_id}",
+    response_model=ApiResponse[PhoneNumberResponse],
+    summary="Atualizar número de telefone",
+    description="Atualiza parcialmente um número de telefone (nome, número e/ou status ativo).",
+    responses={404: {"description": "Número de telefone não encontrado"}},
+)
 async def update_phone_number(
     phone_id: UUID, body: PhoneNumberUpdate, session: AsyncSession = Depends(get_session)
 ):
@@ -74,7 +98,13 @@ async def update_phone_number(
     }
 
 
-@router.delete("/{phone_id}", response_model=dict)
+@router.delete(
+    "/{phone_id}",
+    response_model=ApiResponse[None],
+    summary="Excluir número de telefone",
+    description="Remove permanentemente um número de telefone pelo seu UUID.",
+    responses={404: {"description": "Número de telefone não encontrado"}},
+)
 async def delete_phone_number(phone_id: UUID, session: AsyncSession = Depends(get_session)):
     repo = _get_repo(session)
     deleted = await repo.delete(phone_id)

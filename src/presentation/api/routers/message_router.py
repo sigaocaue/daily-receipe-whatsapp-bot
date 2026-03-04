@@ -15,11 +15,22 @@ from src.infrastructure.database.repositories.sqlalchemy_recipe_repository impor
     SQLAlchemyRecipeRepository,
 )
 from src.infrastructure.messaging.twilio_whatsapp_service import TwilioWhatsAppService
+from src.presentation.api.schemas.message_schema import MessageLogResponse, SendRecipeResponse
+from src.presentation.api.schemas.response_schema import ApiResponse
 
 router = APIRouter(prefix="/api/v1/messages", tags=["Messages"])
 
 
-@router.post("/send", response_model=dict)
+@router.post(
+    "/send",
+    response_model=ApiResponse[SendRecipeResponse],
+    summary="Enviar receita via WhatsApp",
+    description=(
+        "Seleciona uma receita (evitando as últimas 5 enviadas) e envia para todos os "
+        "números de telefone ativos via WhatsApp usando a API do Twilio."
+    ),
+    responses={404: {"description": "Nenhuma receita ou número ativo encontrado"}},
+)
 async def send_recipe(session: AsyncSession = Depends(get_session)):
     recipe_repo = SQLAlchemyRecipeRepository(session)
     phone_repo = SQLAlchemyPhoneNumberRepository(session)
@@ -43,7 +54,12 @@ async def send_recipe(session: AsyncSession = Depends(get_session)):
     }
 
 
-@router.get("/logs", response_model=dict)
+@router.get(
+    "/logs",
+    response_model=ApiResponse[list[MessageLogResponse]],
+    summary="Listar histórico de mensagens",
+    description="Retorna o histórico completo de mensagens enviadas via WhatsApp.",
+)
 async def list_logs(session: AsyncSession = Depends(get_session)):
     repo = SQLAlchemyMessageLogRepository(session)
     logs = await repo.get_all()
@@ -65,7 +81,13 @@ async def list_logs(session: AsyncSession = Depends(get_session)):
     }
 
 
-@router.get("/logs/{log_id}", response_model=dict)
+@router.get(
+    "/logs/{log_id}",
+    response_model=ApiResponse[MessageLogResponse],
+    summary="Buscar log de mensagem por ID",
+    description="Retorna os detalhes de um log de mensagem específico pelo seu UUID.",
+    responses={404: {"description": "Log de mensagem não encontrado"}},
+)
 async def get_log(log_id: UUID, session: AsyncSession = Depends(get_session)):
     repo = SQLAlchemyMessageLogRepository(session)
     log = await repo.get_by_id(log_id)

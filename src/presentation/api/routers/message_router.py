@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.application.use_cases.send_recipe_use_case import SendRecipeUseCase
+from src.application.use_cases.send_recipe_use_case import SendRecipeInput, SendRecipeUseCase
 from src.infrastructure.database.connection import get_session
 from src.infrastructure.database.repositories.sqlalchemy_message_log_repository import (
     SQLAlchemyMessageLogRepository,
@@ -15,7 +15,11 @@ from src.infrastructure.database.repositories.sqlalchemy_recipe_repository impor
     SQLAlchemyRecipeRepository,
 )
 from src.infrastructure.messaging.twilio_whatsapp_service import TwilioWhatsAppService
-from src.presentation.api.schemas.message_schema import MessageLogResponse, SendRecipeResponse
+from src.presentation.api.schemas.message_schema import (
+    MessageLogResponse,
+    SendRecipeRequest,
+    SendRecipeResponse,
+)
 from src.presentation.api.schemas.response_schema import ApiResponse
 
 router = APIRouter(prefix="/api/v1/messages", tags=["Messages"])
@@ -26,20 +30,37 @@ router = APIRouter(prefix="/api/v1/messages", tags=["Messages"])
     response_model=ApiResponse[SendRecipeResponse],
     summary="Enviar receita via WhatsApp",
     description=(
-        "Seleciona uma receita (evitando as últimas 5 enviadas) e envia para todos os "
-        "números de telefone ativos via WhatsApp usando a API do Twilio."
+        "Envia uma receita via WhatsApp. Pode-se: (1) enviar sem body para selecionar "
+        "uma receita aleatória, (2) informar recipe_id para usar uma receita existente, "
+        "ou (3) informar title, ingredients e instructions para enviar uma receita "
+        "personalizada, opcionalmente salvando-a no banco de dados."
     ),
     responses={404: {"description": "Nenhuma receita ou número ativo encontrado"}},
 )
-async def send_recipe(session: AsyncSession = Depends(get_session)):
+async def send_recipe(
+    body: SendRecipeRequest | None = None,
+    session: AsyncSession = Depends(get_session),
+):
     recipe_repo = SQLAlchemyRecipeRepository(session)
     phone_repo = SQLAlchemyPhoneNumberRepository(session)
     log_repo = SQLAlchemyMessageLogRepository(session)
     whatsapp = TwilioWhatsAppService()
 
+    input_data = None
+    if body:
+        input_data = SendRecipeInput(
+            recipe_id=body.recipe_id,
+            title=body.title,
+            ingredients=body.ingredients,
+            instructions=body.instructions,
+            image_url=body.image_url,
+            save_recipe=body.save_recipe,
+            phone_number_ids=body.phone_number_ids,
+        )
+
     use_case = SendRecipeUseCase(recipe_repo, phone_repo, log_repo, whatsapp)
     try:
-        result = await use_case.execute()
+        result = await use_case.execute(input_data)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -47,7 +68,7 @@ async def send_recipe(session: AsyncSession = Depends(get_session)):
         "data": {
             "sent_to": result.sent_to,
             "recipe": result.recipe_title,
-            "recipe_id": str(result.recipe_id),
+            "recipe_id": str(result.recipe_id) if result.recipe_id else None,
             "status": result.status,
         },
         "message": "Recipe sent via WhatsApp",

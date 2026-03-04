@@ -11,7 +11,9 @@ class MessageLogModel(Base):
     __tablename__ = "message_logs"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    recipe_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("recipes.id"), nullable=False)
+    recipe_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("recipes.id"), nullable=True
+    )
     phone_number_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("phone_numbers.id"), nullable=False
     )

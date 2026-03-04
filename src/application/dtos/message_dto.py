@@ -19,5 +19,5 @@ class MessageLogResponseDTO:
 class SendResultDTO:
     sent_to: list[str]
     recipe_title: str
-    recipe_id: UUID
+    recipe_id: UUID | None
     status: str

@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 @dataclass
 class MessageLog:
-    recipe_id: UUID
+    recipe_id: UUID | None
     phone_number_id: UUID
     message_content: str
     status: str = "pending"

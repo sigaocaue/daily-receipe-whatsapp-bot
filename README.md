@@ -81,6 +81,18 @@ poetry run uvicorn src.presentation.main:app --reload --port 8000
 | GET | `/api/v1/phone-numbers` | Lista números |
 | GET | `/api/v1/messages/logs` | Histórico de envios |
 
+## Docker
+
+Para subir o ambiente completo com Docker:
+
+```bash
+docker-compose up --build
+```
+
+A API estará disponível em http://localhost:8000. O PostgreSQL será iniciado automaticamente como serviço interno.
+
+> **Nota:** No ambiente Docker, o `DATABASE_URL` aponta para o serviço `db` (host interno do Compose). Não é necessário criar o banco manualmente.
+
 ## Testes
 
 ```bash

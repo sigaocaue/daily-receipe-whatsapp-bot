@@ -103,7 +103,34 @@ A API estará disponível em:
 
 ---
 
-## 10. (Opcional) Gerar requirements.txt para deploy
+## 10. (Alternativa) Subir com Docker
+
+Se preferir usar Docker em vez de instalar tudo localmente:
+
+```bash
+# Configurar .env (se ainda não fez)
+cp .env.example .env
+# Editar .env com suas credenciais reais
+
+# Subir todos os serviços
+docker-compose up --build
+```
+
+O Docker Compose irá:
+- Criar e iniciar o banco PostgreSQL automaticamente
+- Buildar a imagem da aplicação com todas as dependências
+- Iniciar a API na porta `8000`
+
+A API estará disponível em:
+- http://localhost:8000
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+> **Nota:** No ambiente Docker, o `DATABASE_URL` é sobrescrito para apontar ao serviço `db` interno do Compose. As demais variáveis são carregadas do `.env`.
+
+---
+
+## 11. (Opcional) Gerar requirements.txt para deploy
 
 ```bash
 poetry export -f requirements.txt --output requirements.txt --without-hashes

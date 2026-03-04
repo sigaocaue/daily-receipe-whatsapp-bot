@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-daily_recipe_db}
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    container_name: postgres_db
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-daily_recipe_db}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    volumes:
+      - .persistence/postgres:/var/lib/postgresql/data
+
+volumes:
+    persistence:

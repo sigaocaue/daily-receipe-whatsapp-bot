@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from config import settings
 from src.infrastructure.logging.logger import setup_logging
 from src.presentation.api.routers.message_router import router as message_router
 from src.presentation.api.routers.phone_number_router import router as phone_number_router
@@ -50,10 +51,12 @@ app = FastAPI(
     openapi_tags=tags_metadata,
 )
 
+allowed_origins = [origin.strip() for origin in settings.CORS_ALLOW_ORIGINS.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

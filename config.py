@@ -20,6 +20,14 @@ class Settings(BaseSettings):
     # App
     APP_ENV: str = Field(default="development", description="Application environment")
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
+    CORS_ALLOW_ORIGINS: str = Field(
+        default=(
+            "https://sigaocaue-daily-receipe.netlify.app,"
+            "http://localhost:3000,"
+            "http://localhost:5173"
+        ),
+        description="Comma-separated list of allowed CORS origins",
+    )
 
     model_config = {
         "env_file": ".env",

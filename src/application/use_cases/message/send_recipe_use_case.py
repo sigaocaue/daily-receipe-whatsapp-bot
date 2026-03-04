@@ -148,11 +148,13 @@ class SendRecipeUseCase:
                 log.error_message = str(e)
                 logger.error("Failed to send message to %s: %s", active_phone_entity.phone, e)
 
-            await self._message_log_repo.create(log)
+            created_log = await self._message_log_repo.create(log)
+            message_log_ids.append(created_log.id)
 
         return SendResultDTO(
             sent_to=sent_to,
             recipe_title=recipe.title,
             recipe_id=log_recipe_id,
+            message_log_ids=message_log_ids,
             status="sent" if sent_to else "failed",
         )

@@ -39,6 +39,7 @@ class SendRecipeResponse(BaseModel):
     sent_to: list[str]
     recipe: str
     recipe_id: str | None
+    message_log_ids: list[str]
     status: str
 
 

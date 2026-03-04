@@ -20,4 +20,5 @@ class SendResultDTO:
     sent_to: list[str]
     recipe_title: str
     recipe_id: UUID | None
+    message_log_ids: list[UUID]
     status: str

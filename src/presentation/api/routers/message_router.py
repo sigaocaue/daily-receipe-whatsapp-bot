@@ -69,6 +69,7 @@ async def send_recipe(
             "sent_to": result.sent_to,
             "recipe": result.recipe_title,
             "recipe_id": str(result.recipe_id) if result.recipe_id else None,
+            "message_log_ids": [str(log_id) for log_id in result.message_log_ids],
             "status": result.status,
         },
         "message": "Recipe sent via WhatsApp",

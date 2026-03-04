@@ -1,6 +1,7 @@
 services:
   app:
     build: .
+    container_name: sigaocaue_daily_receipe_app
     ports:
       - "8000:8000"
     depends_on:
@@ -13,7 +14,7 @@ services:
 
   db:
     image: postgres:16
-    container_name: postgres_db
+    container_name: sigaocaue_daily_receipe_db
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     environment:

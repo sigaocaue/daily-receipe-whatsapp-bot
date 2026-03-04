@@ -125,27 +125,28 @@ class SendRecipeUseCase:
         log_recipe_id = None if is_custom_unsaved else recipe.id
 
         sent_to = []
-        for phone in active_phones:
+        message_log_ids: list[UUID] = []
+        for active_phone_entity in active_phones:
             log = MessageLog(
                 recipe_id=log_recipe_id,
-                phone_number_id=phone.id,
+                phone_number_id=active_phone_entity.id,
                 message_content=message_body,
                 status="pending",
             )
             try:
                 sid = await self._whatsapp.send_message(
-                    to=f"whatsapp:{phone.phone}",
+                    to=f"whatsapp:{active_phone_entity.phone}",
                     body=message_body,
                     media_url=recipe.image_url,
                 )
                 log.twilio_message_sid = sid
                 log.status = "sent"
-                sent_to.append(phone.phone)
-                logger.info("Message sent to %s (SID: %s)", phone.phone, sid)
+                sent_to.append(active_phone_entity.phone)
+                logger.info("Message sent to %s (SID: %s)", active_phone_entity.phone, sid)
             except Exception as e:
                 log.status = "failed"
                 log.error_message = str(e)
-                logger.error("Failed to send message to %s: %s", phone.phone, e)
+                logger.error("Failed to send message to %s: %s", active_phone_entity.phone, e)
 
             await self._message_log_repo.create(log)
 

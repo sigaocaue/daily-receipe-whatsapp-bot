@@ -69,11 +69,8 @@ LOG_LEVEL=INFO
 ## 7. Criar banco de dados e rodar migrations
 
 ```bash
-# Criar banco PostgreSQL
-createdb daily_recipe_db
-
-# Rodar migrations
-poetry run alembic upgrade head
+# Rodar migrations dentro do container do banco de dados
+docker exec -it sigaocaue_daily_receipe_app poetry run alembic upgrade head
 ```
 
 ---
@@ -81,7 +78,7 @@ poetry run alembic upgrade head
 ## 8. Popular dados iniciais
 
 ```bash
-poetry run python -m src.infrastructure.database.seed
+docker exec -it sigaocaue_daily_receipe_app poetry run python -m src.infrastructure.database.seed
 ```
 
 Isso irá cadastrar:

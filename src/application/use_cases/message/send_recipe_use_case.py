@@ -94,7 +94,8 @@ class SendRecipeUseCase:
         recipe = await self._resolve_recipe(input_data)
 
         is_custom_unsaved = (
-            input_data.title is not None and not input_data.save_recipe
+            input_data.title is not None
+            and not input_data.save_recipe
             and input_data.recipe_id is None
         )
 

@@ -42,6 +42,12 @@ jobs:
           if [[ "$DB_URL" == postgresql://* ]]; then
             DB_URL="postgresql+asyncpg://${DB_URL#postgresql://}"
           fi
+          DB_URL="${DB_URL//sslmode=/ssl=}"
+          DB_URL="${DB_URL//&channel_binding=require/}"
+          DB_URL="${DB_URL//\?channel_binding=require/}"
+          DB_URL="${DB_URL//&&/&}"
+          DB_URL="${DB_URL/%\?}"
+          DB_URL="${DB_URL/%&}"
           echo "DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
 
       - name: Run Alembic migrations

@@ -23,8 +23,9 @@
 .idea/**/dictionaries
 .idea/**/shelf
 
-# AI Assistant plugin
+# AI Assistant
 .aiassistant
+.claude
 
 # AWS User-specific
 .idea/**/aws.xml

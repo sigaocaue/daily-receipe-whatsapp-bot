@@ -1,4 +1,5 @@
 import os
+import ssl as _ssl
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.engine import make_url
@@ -6,24 +7,22 @@ from sqlalchemy.orm import DeclarativeBase
 
 from config import settings
 
+_NO_SSL_VALUES = {"disable", "allow", "false", "0", "no"}
 
-def _normalize_database_url(raw_database_url: str) -> str:
+
+def _normalize_database_url(raw_database_url: str) -> tuple[str, bool]:
+    """Strip query params that asyncpg doesn't understand and return (url, use_ssl)."""
     url = make_url(raw_database_url)
     query = dict(url.query)
 
-    # asyncpg accepts sslmode with these values; keep it as-is when valid.
-    _ASYNCPG_SSLMODES = {"disable", "allow", "prefer", "require", "verify-ca", "verify-full"}
-
-    sslmode = str(query.get("sslmode", "")).strip().strip("'\"").lower()
-    if sslmode and sslmode not in _ASYNCPG_SSLMODES:
-        # Non-standard value — replace with a safe default.
-        query["sslmode"] = "require"
+    sslmode = str(query.pop("sslmode", "")).strip().strip("'\"").lower()
+    use_ssl = sslmode not in _NO_SSL_VALUES
 
     # Parameters below are valid in libpq/psycopg URLs but unsupported by asyncpg.
-    for key in ("channel_binding", "gssencmode", "target_session_attrs", "sslnegotiation"):
+    for key in ("ssl", "channel_binding", "gssencmode", "target_session_attrs", "sslnegotiation"):
         query.pop(key, None)
 
-    return str(url.set(query=query))
+    return str(url.set(query=query)), use_ssl
 
 
 # Some platforms inject PG* variables with libpq semantics that asyncpg rejects.
@@ -36,7 +35,16 @@ for key in (
 ):
     os.environ.pop(key, None)
 
-engine = create_async_engine(_normalize_database_url(settings.DATABASE_URL), echo=False)
+_clean_url, _use_ssl = _normalize_database_url(settings.DATABASE_URL)
+
+_connect_args: dict = {}
+if _use_ssl:
+    _ctx = _ssl.create_default_context()
+    _ctx.check_hostname = False
+    _ctx.verify_mode = _ssl.CERT_NONE
+    _connect_args["ssl"] = _ctx
+
+engine = create_async_engine(_clean_url, echo=False, connect_args=_connect_args)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 

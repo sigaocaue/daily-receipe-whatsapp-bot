@@ -21,6 +21,7 @@ from src.presentation.api.schemas.protein_schema import (
     ProteinUpdate,
 )
 from src.presentation.api.schemas.response_schema import ApiResponse
+from types import NoneType
 
 router = APIRouter(prefix="/api/v1/proteins", tags=["Proteins"])
 
@@ -97,7 +98,7 @@ async def update_protein(
 
 @router.delete(
     "/{protein_id}",
-    response_model=ApiResponse[None],
+    response_model=ApiResponse[NoneType],
     summary="Excluir proteína",
     description="Remove permanentemente uma proteína pelo seu UUID.",
     responses={404: {"description": "Proteína não encontrada"}},

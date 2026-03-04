@@ -22,6 +22,10 @@ def _normalize_database_url(raw_database_url: str) -> tuple[str, bool]:
     for key in ("ssl", "channel_binding", "gssencmode", "target_session_attrs", "sslnegotiation"):
         query.pop(key, None)
 
+    # Ensure the URL always uses the asyncpg driver.
+    if url.get_backend_name() == "postgresql" and "+asyncpg" not in url.drivername:
+        url = url.set(drivername="postgresql+asyncpg")
+
     return str(url.set(query=query)), use_ssl
 
 

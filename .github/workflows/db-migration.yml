@@ -36,13 +36,19 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
 
+      - name: Normalize async database URL
+        run: |
+          DB_URL="${{ secrets.NEON_DATABASE_URL }}"
+          if [[ "$DB_URL" == postgresql://* ]]; then
+            DB_URL="postgresql+asyncpg://${DB_URL#postgresql://}"
+          fi
+          echo "DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
+
       - name: Run Alembic migrations
         run: poetry run alembic upgrade head
         env:
-          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           TWILIO_ACCOUNT_SID: test
           TWILIO_AUTH_TOKEN: test
           TWILIO_WHATSAPP_FROM: whatsapp:+14155238886
           OPENAI_API_KEY: test
           UNSPLASH_ACCESS_KEY: test
-

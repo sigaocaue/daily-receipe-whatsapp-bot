@@ -1,32 +1,42 @@
 import os
 import ssl as _ssl
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.engine import make_url
 from sqlalchemy.orm import DeclarativeBase
 
 from config import settings
 
 _NO_SSL_VALUES = {"disable", "allow", "false", "0", "no"}
+_STRIP_PARAMS = {"sslmode", "ssl", "channel_binding", "gssencmode", "target_session_attrs", "sslnegotiation"}
 
 
 def _normalize_database_url(raw_database_url: str) -> tuple[str, bool]:
     """Strip query params that asyncpg doesn't understand and return (url, use_ssl)."""
-    url = make_url(raw_database_url)
-    query = dict(url.query)
+    parsed = urlparse(raw_database_url)
+    query = parse_qs(parsed.query)
 
-    sslmode = str(query.pop("sslmode", "")).strip().strip("'\"").lower()
+    sslmode = query.get("sslmode", [""])[0].strip().strip("'\"").lower()
     use_ssl = sslmode not in _NO_SSL_VALUES
 
-    # Parameters below are valid in libpq/psycopg URLs but unsupported by asyncpg.
-    for key in ("ssl", "channel_binding", "gssencmode", "target_session_attrs", "sslnegotiation"):
-        query.pop(key, None)
+    # Remove params unsupported by asyncpg.
+    clean_query = {k: v[0] for k, v in query.items() if k not in _STRIP_PARAMS}
 
-    # Ensure the URL always uses the asyncpg driver.
-    if url.get_backend_name() == "postgresql" and "+asyncpg" not in url.drivername:
-        url = url.set(drivername="postgresql+asyncpg")
+    # Ensure the scheme uses asyncpg driver.
+    scheme = parsed.scheme
+    if scheme.startswith("postgresql") and "+asyncpg" not in scheme:
+        scheme = "postgresql+asyncpg"
 
-    return str(url.set(query=query)), use_ssl
+    clean_url = urlunparse((
+        scheme,
+        parsed.netloc,  # preserves user:pass@host:port exactly
+        parsed.path,
+        parsed.params,
+        urlencode(clean_query) if clean_query else "",
+        "",
+    ))
+
+    return clean_url, use_ssl
 
 
 # Some platforms inject PG* variables with libpq semantics that asyncpg rejects.

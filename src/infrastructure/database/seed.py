@@ -4,8 +4,7 @@ import logging
 from sqlalchemy import select
 
 from src.infrastructure.database.connection import async_session
-from src.infrastructure.database.models.phone_number_model import PhoneNumberModel
-from src.infrastructure.database.models.protein_model import ProteinModel
+from src.infrastructure.database.models import PhoneNumberModel, ProteinModel
 from src.infrastructure.logging.logger import setup_logging
 
 setup_logging()

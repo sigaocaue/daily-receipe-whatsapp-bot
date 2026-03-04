@@ -4,13 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.dtos.protein_dto import CreateProteinDTO, UpdateProteinDTO
-from src.application.use_cases.create_protein_use_case import (
-    CreateProteinUseCase,
-    DeleteProteinUseCase,
-    GetProteinUseCase,
-    ListProteinsUseCase,
-    UpdateProteinUseCase,
-)
+from src.application.use_cases.protein.create_protein_use_case import CreateProteinUseCase
+from src.application.use_cases.protein.delete_protein_use_case import DeleteProteinUseCase
+from src.application.use_cases.protein.get_protein_use_case import GetProteinUseCase
+from src.application.use_cases.protein.list_proteins_use_case import ListProteinsUseCase
+from src.application.use_cases.protein.update_protein_use_case import UpdateProteinUseCase
 from src.infrastructure.database.connection import get_session
 from src.infrastructure.database.repositories.sqlalchemy_protein_repository import (
     SQLAlchemyProteinRepository,

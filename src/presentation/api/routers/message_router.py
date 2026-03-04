@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.application.use_cases.send_recipe_use_case import SendRecipeInput, SendRecipeUseCase
+from src.application.use_cases.message.send_recipe_use_case import SendRecipeInput, SendRecipeUseCase
 from src.infrastructure.database.connection import get_session
 from src.infrastructure.database.repositories.sqlalchemy_message_log_repository import (
     SQLAlchemyMessageLogRepository,

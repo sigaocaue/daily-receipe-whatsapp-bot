@@ -4,14 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.dtos.recipe_dto import CreateRecipeDTO, GenerateRecipeDTO, UpdateRecipeDTO
-from src.application.use_cases.generate_recipe_use_case import GenerateRecipeUseCase
-from src.application.use_cases.list_recipes_use_case import (
-    CreateRecipeUseCase,
-    DeleteRecipeUseCase,
-    GetRecipeUseCase,
-    ListRecipesUseCase,
-    UpdateRecipeUseCase,
-)
+from src.application.use_cases.recipe.create_recipe_use_case import CreateRecipeUseCase
+from src.application.use_cases.recipe.delete_recipe_use_case import DeleteRecipeUseCase
+from src.application.use_cases.recipe.generate_recipe_use_case import GenerateRecipeUseCase
+from src.application.use_cases.recipe.get_recipe_use_case import GetRecipeUseCase
+from src.application.use_cases.recipe.list_recipes_use_case import ListRecipesUseCase
+from src.application.use_cases.recipe.update_recipe_use_case import UpdateRecipeUseCase
 from src.infrastructure.ai.openai_recipe_generator import OpenAIRecipeGenerator
 from src.infrastructure.database.connection import get_session
 from src.infrastructure.database.repositories.sqlalchemy_protein_repository import (

@@ -43,7 +43,8 @@ _clean_url, _use_ssl = _normalize_database_url(settings.DATABASE_URL)
 
 _connect_args: dict = {}
 if _use_ssl:
-    _connect_args["ssl"] = _ssl.create_default_context()
+    # Use "require" so asyncpg handles SSL negotiation itself (equivalent to sslmode=require).
+    _connect_args["ssl"] = "require"
 
 engine = create_async_engine(_clean_url, echo=False, connect_args=_connect_args)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

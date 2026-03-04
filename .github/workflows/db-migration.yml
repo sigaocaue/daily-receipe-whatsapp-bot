@@ -1,0 +1,48 @@
+name: DB Migration (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment label"
+        required: true
+        default: production
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  migrate:
+    name: 3) Run Database Migrations (Manual)
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+
+      - name: Run Alembic migrations
+        run: poetry run alembic upgrade head
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          TWILIO_ACCOUNT_SID: test
+          TWILIO_AUTH_TOKEN: test
+          TWILIO_WHATSAPP_FROM: whatsapp:+14155238886
+          OPENAI_API_KEY: test
+          UNSPLASH_ACCESS_KEY: test
+

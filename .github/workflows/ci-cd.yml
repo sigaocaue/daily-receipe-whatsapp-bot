@@ -1,0 +1,105 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: 1) Run Pytest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+
+      - name: Run tests
+        run: poetry run pytest -q
+        env:
+          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/daily_recipe_db
+          TWILIO_ACCOUNT_SID: test
+          TWILIO_AUTH_TOKEN: test
+          TWILIO_WHATSAPP_FROM: whatsapp:+14155238886
+          OPENAI_API_KEY: test
+          UNSPLASH_ACCESS_KEY: test
+
+  build_and_push:
+    name: 2) Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_uri: ${{ steps.export_image.outputs.image_uri }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set lower case repository owner
+        id: repo_owner
+        run: echo "value=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Set lower case repository name
+        id: repo_name
+        run: |
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          echo "value=${REPO_NAME,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ steps.repo_owner.outputs.value }}/${{ steps.repo_name.outputs.value }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Export image URI
+        id: export_image
+        run: |
+          IMAGE_URI="ghcr.io/${{ steps.repo_owner.outputs.value }}/${{ steps.repo_name.outputs.value }}:sha-${GITHUB_SHA::7}"
+          echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+
+  deploy_render:
+    name: 4) Deploy on Render
+    runs-on: ubuntu-latest
+    needs: build_and_push
+    steps:
+      - name: Trigger Render deploy hook
+        run: |
+          curl --fail --show-error --silent -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          echo "Render deploy triggered for image ${IMAGE_URI}"
+        env:
+          IMAGE_URI: ${{ needs.build_and_push.outputs.image_uri }}

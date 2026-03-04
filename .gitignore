@@ -26,6 +26,7 @@
 # AI Assistant
 .aiassistant
 .claude
+CLAUDE.md
 
 # AWS User-specific
 .idea/**/aws.xml

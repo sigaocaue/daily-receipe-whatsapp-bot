@@ -51,9 +51,15 @@ for key in (
 
 _clean_url, _use_ssl = _normalize_database_url(settings.DATABASE_URL)
 
+# Extract the real username/password from the original URL so that SQLAlchemy's
+# asyncpg dialect doesn't mangle usernames containing dots (e.g. Supabase pooler).
+_parsed = urlparse(settings.DATABASE_URL)
 _connect_args: dict = {}
+if _parsed.username:
+    _connect_args["user"] = _parsed.username
+if _parsed.password:
+    _connect_args["password"] = _parsed.password
 if _use_ssl:
-    # Use "require" so asyncpg handles SSL negotiation itself (equivalent to sslmode=require).
     _connect_args["ssl"] = "require"
 
 engine = create_async_engine(_clean_url, echo=False, connect_args=_connect_args)

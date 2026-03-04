@@ -51,7 +51,13 @@ app = FastAPI(
     openapi_tags=tags_metadata,
 )
 
-allowed_origins = [origin.strip() for origin in settings.CORS_ALLOW_ORIGINS.split(",") if origin.strip()]
+allowed_origins = list(
+    {
+        origin.strip().rstrip("/")
+        for origin in settings.CORS_ALLOW_ORIGINS.split(",")
+        if origin.strip()
+    }
+)
 
 app.add_middleware(
     CORSMiddleware,

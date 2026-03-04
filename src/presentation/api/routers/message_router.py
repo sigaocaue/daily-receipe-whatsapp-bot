@@ -65,13 +65,13 @@ async def send_recipe(
         raise HTTPException(status_code=404, detail=str(e))
 
     return {
-        "data": {
-            "sent_to": result.sent_to,
-            "recipe": result.recipe_title,
-            "recipe_id": str(result.recipe_id) if result.recipe_id else None,
-            "message_log_ids": [str(log_id) for log_id in result.message_log_ids],
-            "status": result.status,
-        },
+        "data": SendRecipeResponse(
+            sent_to=result.sent_to,
+            recipe=result.recipe_title,
+            recipe_id=str(result.recipe_id) if result.recipe_id else None,
+            message_log_ids=[str(log_id) for log_id in result.message_log_ids],
+            status=result.status,
+        ),
         "message": "Recipe sent via WhatsApp",
     }
 
@@ -87,16 +87,16 @@ async def list_logs(session: AsyncSession = Depends(get_session)):
     logs = await repo.get_all()
     return {
         "data": [
-            {
-                "id": str(log.id),
-                "recipe_id": str(log.recipe_id),
-                "phone_number_id": str(log.phone_number_id),
-                "message_content": log.message_content,
-                "status": log.status,
-                "twilio_message_sid": log.twilio_message_sid,
-                "error_message": log.error_message,
-                "sent_at": log.sent_at.isoformat(),
-            }
+            MessageLogResponse(
+                id=str(log.id),
+                recipe_id=str(log.recipe_id),
+                phone_number_id=str(log.phone_number_id),
+                message_content=log.message_content,
+                status=log.status,
+                twilio_message_sid=log.twilio_message_sid,
+                error_message=log.error_message,
+                sent_at=log.sent_at,
+            )
             for log in logs
         ],
         "message": "Message logs listed",
@@ -116,15 +116,15 @@ async def get_log(log_id: UUID, session: AsyncSession = Depends(get_session)):
     if not log:
         raise HTTPException(status_code=404, detail="Message log not found")
     return {
-        "data": {
-            "id": str(log.id),
-            "recipe_id": str(log.recipe_id),
-            "phone_number_id": str(log.phone_number_id),
-            "message_content": log.message_content,
-            "status": log.status,
-            "twilio_message_sid": log.twilio_message_sid,
-            "error_message": log.error_message,
-            "sent_at": log.sent_at.isoformat(),
-        },
+        "data": MessageLogResponse(
+            id=str(log.id),
+            recipe_id=str(log.recipe_id),
+            phone_number_id=str(log.phone_number_id),
+            message_content=log.message_content,
+            status=log.status,
+            twilio_message_sid=log.twilio_message_sid,
+            error_message=log.error_message,
+            sent_at=log.sent_at,
+        ),
         "message": "Message log found",
     }

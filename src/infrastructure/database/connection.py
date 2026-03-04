@@ -54,7 +54,7 @@ _clean_url, _use_ssl = _normalize_database_url(settings.DATABASE_URL)
 # Extract the real username/password from the original URL so that SQLAlchemy's
 # asyncpg dialect doesn't mangle usernames containing dots (e.g. Supabase pooler).
 _parsed = urlparse(settings.DATABASE_URL)
-_connect_args: dict = {}
+_connect_args: dict = {"statement_cache_size": 0}
 if _parsed.username:
     _connect_args["user"] = _parsed.username
 if _parsed.password:

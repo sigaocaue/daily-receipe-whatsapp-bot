@@ -104,66 +104,6 @@ async def list_recipes(session: AsyncSession = Depends(get_session)):
     return {"data": [_recipe_response(r) for r in recipes], "message": "Recipes listed"}
 
 
-@router.get(
-    "/{recipe_id}",
-    response_model=ApiResponse[RecipeResponse],
-    summary="Buscar receita por ID",
-    description="Retorna uma receita específica pelo seu UUID.",
-    responses={404: {"description": "Receita não encontrada"}},
-)
-async def get_recipe(recipe_id: UUID, session: AsyncSession = Depends(get_session)):
-    repo = SQLAlchemyRecipeRepository(session)
-    use_case = GetRecipeUseCase(repo)
-    recipe = await use_case.execute(recipe_id)
-    if not recipe:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-    return {"data": _recipe_response(recipe), "message": "Recipe found"}
-
-
-@router.patch(
-    "/{recipe_id}",
-    response_model=ApiResponse[RecipeResponse],
-    summary="Atualizar receita",
-    description="Atualiza parcialmente uma receita existente.",
-    responses={404: {"description": "Receita não encontrada"}},
-)
-async def update_recipe(
-    recipe_id: UUID, body: RecipeUpdate, session: AsyncSession = Depends(get_session)
-):
-    repo = SQLAlchemyRecipeRepository(session)
-    use_case = UpdateRecipeUseCase(repo)
-    recipe = await use_case.execute(
-        recipe_id,
-        UpdateRecipeDTO(
-            title=body.title,
-            ingredients=body.ingredients,
-            instructions=body.instructions,
-            source_url=body.source_url,
-            image_url=body.image_url,
-            source_site=body.source_site,
-        ),
-    )
-    if not recipe:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-    return {"data": _recipe_response(recipe), "message": "Recipe updated"}
-
-
-@router.delete(
-    "/{recipe_id}",
-    response_model=ApiResponse[NoneType],
-    summary="Excluir receita",
-    description="Remove permanentemente uma receita pelo seu UUID.",
-    responses={404: {"description": "Receita não encontrada"}},
-)
-async def delete_recipe(recipe_id: UUID, session: AsyncSession = Depends(get_session)):
-    repo = SQLAlchemyRecipeRepository(session)
-    use_case = DeleteRecipeUseCase(repo)
-    deleted = await use_case.execute(recipe_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-    return {"data": None, "message": "Recipe deleted"}
-
-
 @router.post(
     "/generate",
     response_model=ApiResponse[RecipeResponse],
@@ -246,3 +186,63 @@ async def scrape_recipe(
         logger.error("Unexpected error during recipe scraping: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Erro inesperado ao importar a receita.")
     return {"data": _recipe_response(recipe), "message": "Receita importada do TudoGostoso"}
+
+
+@router.get(
+    "/{recipe_id}",
+    response_model=ApiResponse[RecipeResponse],
+    summary="Buscar receita por ID",
+    description="Retorna uma receita específica pelo seu UUID.",
+    responses={404: {"description": "Receita não encontrada"}},
+)
+async def get_recipe(recipe_id: UUID, session: AsyncSession = Depends(get_session)):
+    repo = SQLAlchemyRecipeRepository(session)
+    use_case = GetRecipeUseCase(repo)
+    recipe = await use_case.execute(recipe_id)
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return {"data": _recipe_response(recipe), "message": "Recipe found"}
+
+
+@router.patch(
+    "/{recipe_id}",
+    response_model=ApiResponse[RecipeResponse],
+    summary="Atualizar receita",
+    description="Atualiza parcialmente uma receita existente.",
+    responses={404: {"description": "Receita não encontrada"}},
+)
+async def update_recipe(
+    recipe_id: UUID, body: RecipeUpdate, session: AsyncSession = Depends(get_session)
+):
+    repo = SQLAlchemyRecipeRepository(session)
+    use_case = UpdateRecipeUseCase(repo)
+    recipe = await use_case.execute(
+        recipe_id,
+        UpdateRecipeDTO(
+            title=body.title,
+            ingredients=body.ingredients,
+            instructions=body.instructions,
+            source_url=body.source_url,
+            image_url=body.image_url,
+            source_site=body.source_site,
+        ),
+    )
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return {"data": _recipe_response(recipe), "message": "Recipe updated"}
+
+
+@router.delete(
+    "/{recipe_id}",
+    response_model=ApiResponse[NoneType],
+    summary="Excluir receita",
+    description="Remove permanentemente uma receita pelo seu UUID.",
+    responses={404: {"description": "Receita não encontrada"}},
+)
+async def delete_recipe(recipe_id: UUID, session: AsyncSession = Depends(get_session)):
+    repo = SQLAlchemyRecipeRepository(session)
+    use_case = DeleteRecipeUseCase(repo)
+    deleted = await use_case.execute(recipe_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return {"data": None, "message": "Recipe deleted"}

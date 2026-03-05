@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: str = Field(..., description="Twilio Account SID")
     TWILIO_AUTH_TOKEN: str = Field(..., description="Twilio Auth Token")
     TWILIO_WHATSAPP_FROM: str = Field(..., description="Twilio WhatsApp sender number")
+    TWILIO_CONTENT_SID: str = Field(default="", description="Twilio Content Template SID for WhatsApp")
 
     # OpenAI
     OPENAI_API_KEY: str = Field(..., description="OpenAI API key")

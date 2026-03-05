@@ -1,6 +1,5 @@
 import logging
 import random
-from uuid import UUID
 
 from src.application.dtos.recipe_dto import GenerateRecipeDTO
 from src.domain.entities.recipe import Recipe

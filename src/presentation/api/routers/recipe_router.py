@@ -1,7 +1,11 @@
+import logging
 from uuid import UUID
+from types import NoneType
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from src.application.dtos.recipe_dto import CreateRecipeDTO, GenerateRecipeDTO, UpdateRecipeDTO
 from src.application.use_cases.recipe.create_recipe_use_case import CreateRecipeUseCase
@@ -10,7 +14,19 @@ from src.application.use_cases.recipe.generate_recipe_use_case import GenerateRe
 from src.application.use_cases.recipe.get_recipe_use_case import GetRecipeUseCase
 from src.application.use_cases.recipe.list_recipes_use_case import ListRecipesUseCase
 from src.application.use_cases.recipe.update_recipe_use_case import UpdateRecipeUseCase
+from google.genai.errors import ClientError as GeminiClientError
+from openai import RateLimitError as OpenAIRateLimitError
+
+from config import settings
+from src.domain.services.recipe_service import RecipeGeneratorService
+from src.infrastructure.ai.gemini_recipe_generator import GeminiRecipeGenerator
 from src.infrastructure.ai.openai_recipe_generator import OpenAIRecipeGenerator
+
+
+def _get_recipe_generator() -> RecipeGeneratorService:
+    if settings.AI_PROVIDER.lower() == "openai":
+        return OpenAIRecipeGenerator()
+    return GeminiRecipeGenerator()
 from src.infrastructure.database.connection import get_session
 from src.infrastructure.database.repositories.sqlalchemy_protein_repository import (
     SQLAlchemyProteinRepository,
@@ -129,7 +145,7 @@ async def update_recipe(
 
 @router.delete(
     "/{recipe_id}",
-    response_model=ApiResponse[None],
+    response_model=ApiResponse[NoneType],
     summary="Excluir receita",
     description="Remove permanentemente uma receita pelo seu UUID.",
     responses={404: {"description": "Receita não encontrada"}},
@@ -161,7 +177,7 @@ async def generate_recipe(
 ):
     recipe_repo = SQLAlchemyRecipeRepository(session)
     protein_repo = SQLAlchemyProteinRepository(session)
-    generator = OpenAIRecipeGenerator()
+    generator = _get_recipe_generator()
 
     use_case = GenerateRecipeUseCase(recipe_repo, protein_repo, generator)
     try:
@@ -169,5 +185,18 @@ async def generate_recipe(
             GenerateRecipeDTO(protein_ids=body.protein_ids if body else None)
         )
     except ValueError as e:
+        logger.warning("ValueError during recipe generation: %s", str(e))
         raise HTTPException(status_code=400, detail=str(e))
+    except OpenAIRateLimitError as e:
+        logger.warning("OpenAI quota exceeded: %s", e)
+        raise HTTPException(status_code=429, detail="Cota da API excedida. Tente novamente mais tarde.")
+    except GeminiClientError as e:
+        if e.code == 429:
+            logger.warning("Gemini quota exceeded: %s", e)
+            raise HTTPException(status_code=429, detail="Cota da API excedida. Tente novamente mais tarde.")
+        logger.error("Gemini client error during recipe generation: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Erro inesperado ao gerar a receita.")
+    except Exception as e:
+        logger.error("Unexpected error during recipe generation: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Erro inesperado ao gerar a receita.")
     return {"data": _recipe_response(recipe), "message": "Recipe generated via AI"}

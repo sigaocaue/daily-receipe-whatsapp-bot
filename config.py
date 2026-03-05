@@ -15,8 +15,14 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str = Field(..., description="OpenAI API key")
 
+    # Gemini
+    GEMINI_API_KEY: str = Field(..., description="Google Gemini API key")
+
     # Unsplash
     UNSPLASH_ACCESS_KEY: str = Field(..., description="Unsplash API access key")
+
+    # AI Provider
+    AI_PROVIDER: str = Field(default="gemini", description="AI provider to use: 'gemini' or 'openai'")
 
     # App
     APP_ENV: str = Field(default="development", description="Application environment")

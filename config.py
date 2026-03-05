@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     # AI Provider
     AI_PROVIDER: str = Field(default="gemini", description="AI provider to use: 'gemini' or 'openai'")
 
+    # TudoGostoso Scraper
+    TUDO_GOSTOSO_SCRAPER_URL: str = Field(
+        default="https://daily-receipe-web-scraping.vercel.app/api/receita",
+        description="URL of the TudoGostoso recipe scraper API",
+    )
+
     # App
     APP_ENV: str = Field(default="development", description="Application environment")
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")

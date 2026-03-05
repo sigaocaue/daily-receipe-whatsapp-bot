@@ -27,3 +27,8 @@ class UpdateRecipeDTO:
 @dataclass
 class GenerateRecipeDTO:
     protein_ids: list[UUID] | None = None
+
+
+@dataclass
+class ScrapeRecipeDTO:
+    url: str | None = None

@@ -28,6 +28,10 @@ class GenerateRecipeRequest(BaseModel):
     protein_ids: list[UUID] | None = None
 
 
+class ScrapeRecipeRequest(BaseModel):
+    url: str | None = None
+
+
 class RecipeResponse(BaseModel):
     id: UUID
     title: str

@@ -7,12 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
-from src.application.dtos.recipe_dto import CreateRecipeDTO, GenerateRecipeDTO, UpdateRecipeDTO
+import httpx
+
+from src.application.dtos.recipe_dto import CreateRecipeDTO, GenerateRecipeDTO, ScrapeRecipeDTO, UpdateRecipeDTO
 from src.application.use_cases.recipe.create_recipe_use_case import CreateRecipeUseCase
 from src.application.use_cases.recipe.delete_recipe_use_case import DeleteRecipeUseCase
 from src.application.use_cases.recipe.generate_recipe_use_case import GenerateRecipeUseCase
 from src.application.use_cases.recipe.get_recipe_use_case import GetRecipeUseCase
 from src.application.use_cases.recipe.list_recipes_use_case import ListRecipesUseCase
+from src.application.use_cases.recipe.scrape_recipe_use_case import ScrapeRecipeUseCase
 from src.application.use_cases.recipe.update_recipe_use_case import UpdateRecipeUseCase
 from google.genai.errors import ClientError as GeminiClientError
 from openai import RateLimitError as OpenAIRateLimitError
@@ -34,11 +37,13 @@ from src.infrastructure.database.repositories.sqlalchemy_protein_repository impo
 from src.infrastructure.database.repositories.sqlalchemy_recipe_repository import (
     SQLAlchemyRecipeRepository,
 )
+from src.infrastructure.scraping.tudo_gostoso_scraper import TudoGostosoScraper
 from src.presentation.api.schemas.recipe_schema import (
     GenerateRecipeRequest,
     RecipeCreate,
     RecipeResponse,
     RecipeUpdate,
+    ScrapeRecipeRequest,
 )
 from src.presentation.api.schemas.response_schema import ApiResponse
 
@@ -200,3 +205,44 @@ async def generate_recipe(
         logger.error("Unexpected error during recipe generation: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Erro inesperado ao gerar a receita.")
     return {"data": _recipe_response(recipe), "message": "Recipe generated via AI"}
+
+
+@router.post(
+    "/scrape",
+    response_model=ApiResponse[RecipeResponse],
+    status_code=201,
+    summary="Importar receita do TudoGostoso",
+    description=(
+        "Importa uma receita do site TudoGostoso via web scraping. "
+        "Se uma URL for fornecida, busca a receita específica. "
+        "Caso contrário, busca uma receita aleatória."
+    ),
+    responses={
+        400: {"description": "URL inválida ou erro ao buscar receita"},
+        502: {"description": "Erro de comunicação com o serviço de scraping"},
+    },
+)
+async def scrape_recipe(
+    body: ScrapeRecipeRequest | None = None,
+    session: AsyncSession = Depends(get_session),
+):
+    recipe_repo = SQLAlchemyRecipeRepository(session)
+    scraper = TudoGostosoScraper()
+    use_case = ScrapeRecipeUseCase(recipe_repo, scraper)
+    try:
+        recipe = await use_case.execute(
+            ScrapeRecipeDTO(url=body.url if body else None)
+        )
+    except httpx.HTTPStatusError as e:
+        logger.warning("Scraper API returned error: %s", e)
+        raise HTTPException(status_code=502, detail="Erro ao buscar receita do TudoGostoso.")
+    except httpx.RequestError as e:
+        logger.error("Scraper API connection error: %s", e)
+        raise HTTPException(status_code=502, detail="Não foi possível conectar ao serviço de scraping.")
+    except KeyError as e:
+        logger.error("Unexpected scraper response format: missing key %s", e)
+        raise HTTPException(status_code=502, detail="Resposta inesperada do serviço de scraping.")
+    except Exception as e:
+        logger.error("Unexpected error during recipe scraping: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Erro inesperado ao importar a receita.")
+    return {"data": _recipe_response(recipe), "message": "Receita importada do TudoGostoso"}

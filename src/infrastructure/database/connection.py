@@ -1,5 +1,4 @@
 import os
-import ssl as _ssl
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -7,7 +6,6 @@ from sqlalchemy.orm import DeclarativeBase
 
 from config import settings
 
-_NO_SSL_VALUES = {"disable", "allow", "false", "0", "no"}
 _STRIP_PARAMS = {"sslmode", "ssl", "channel_binding", "gssencmode", "target_session_attrs", "sslnegotiation"}
 
 
@@ -16,8 +14,7 @@ def _normalize_database_url(raw_database_url: str) -> tuple[str, bool]:
     parsed = urlparse(raw_database_url)
     query = parse_qs(parsed.query)
 
-    sslmode = query.get("sslmode", [""])[0].strip().strip("'\"").lower()
-    use_ssl = sslmode not in _NO_SSL_VALUES
+    use_ssl = settings.DATABASE_USE_SSL
 
     # Remove params unsupported by asyncpg.
     clean_query = {k: v[0] for k, v in query.items() if k not in _STRIP_PARAMS}

@@ -5,6 +5,7 @@ from pydantic import Field
 class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = Field(..., description="PostgreSQL async connection string")
+    DATABASE_USE_SSL: bool = Field(default=True, description="Enable SSL for database connection")
 
     # Twilio
     TWILIO_ACCOUNT_SID: str = Field(..., description="Twilio Account SID")

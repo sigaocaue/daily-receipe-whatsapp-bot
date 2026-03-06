@@ -1,0 +1,91 @@
+%% [MermaidChart: cb448ca1-262a-44b5-823f-a91fb93763e1]
+%% [MermaidChart: cb448ca1-262a-44b5-823f-a91fb93763e1]
+%% [MermaidChart: cb448ca1-262a-44b5-823f-a91fb93763e1]
+%% [MermaidChart: cb448ca1-262a-44b5-823f-a91fb93763e1]
+%% [MermaidChart: cb448ca1-262a-44b5-823f-a91fb93763e1]
+---
+config:
+  layout: fixed
+---
+flowchart TB
+ subgraph Presentation["Presentation Layer (FastAPI)"]
+        FastAPI["FastAPI App"]
+        RecipeRouter["Recipe Router"]
+        ProteinRouter["Protein Router"]
+        PhoneRouter["Phone Number Router"]
+        MessageRouter["Message Router"]
+  end
+ subgraph Application["Application Layer (Use Cases)"]
+        GenerateUC["Generate Recipe Use Case"]
+        ScrapeUC["Scrape Recipe Use Case"]
+        RecipeCRUD["Recipe CRUD Use Cases"]
+        ProteinCRUD["Protein CRUD Use Cases"]
+        PhoneCRUD["Phone Number CRUD Use Cases"]
+        SendUC["Send Recipe Use Case"]
+        LogUC["Message Log Use Cases"]
+  end
+ subgraph Domain["Domain Layer (Entities & Interfaces)"]
+        Entities["Recipe / Protein / PhoneNumber / MessageLog"]
+        RepoInterfaces["Abstract Repositories"]
+        ServiceInterfaces["Abstract Services"]
+  end
+ subgraph AI["AI Providers"]
+        Gemini["Gemini Recipe Generator"]
+        OpenAI["OpenAI Recipe Generator"]
+  end
+ subgraph Imaging["Image Provider"]
+        Unsplash["Unsplash Image Fetcher"]
+  end
+ subgraph Scraping["Web Scraping"]
+        TudoGostoso["TudoGostoso Scraper"]
+  end
+ subgraph Messaging["WhatsApp Messaging"]
+        Twilio["Twilio WhatsApp Service"]
+  end
+ subgraph Database["Database"]
+        Repos["SQLAlchemy Repositories"]
+  end
+ subgraph Infrastructure["Infrastructure Layer"]
+        AI
+        Imaging
+        Scraping
+        Messaging
+        Database
+  end
+ subgraph External["Servicos Externos"]
+        GeminiAPI[("Google Gemini API")]
+        OpenAIAPI[("OpenAI API")]
+        UnsplashAPI[("Unsplash API")]
+        TudoGostosoAPI[("TudoGostoso Scraper API")]
+        TwilioAPI[("Twilio API")]
+        Supabase[("Supabase PostgreSQL")]
+  end
+    User(["Usuário / Cliente HTTP"]) -- HTTP Request --> FastAPI
+    FastAPI --> RecipeRouter & ProteinRouter & PhoneRouter & MessageRouter
+    RecipeRouter -- POST /generate --> GenerateUC
+    RecipeRouter -- POST /scrape --> ScrapeUC
+    RecipeRouter -- CRUD --> RecipeCRUD
+    ProteinRouter -- CRUD --> ProteinCRUD
+    PhoneRouter -- CRUD --> PhoneCRUD
+    MessageRouter -- POST /send --> SendUC
+    MessageRouter -- GET /logs --> LogUC
+    GenerateUC --> Gemini & OpenAI & Unsplash & Repos
+    ScrapeUC --> TudoGostoso & Repos
+    SendUC --> Twilio & Repos
+    RecipeCRUD --> Repos
+    ProteinCRUD --> Repos
+    PhoneCRUD --> Repos
+    LogUC --> Repos
+    Gemini -- API Call --> GeminiAPI
+    OpenAI -- API Call --> OpenAIAPI
+    Unsplash -- API Call --> UnsplashAPI
+    TudoGostoso -- API Call --> TudoGostosoAPI
+    Twilio -- API Call --> TwilioAPI
+    Repos -- SQL Queries --> Supabase
+
+    style User fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style Presentation fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style Application fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    style Domain fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style Infrastructure fill:#fce4ec,stroke:#b71c1c,stroke-width:2px
+    style External fill:#e0f7fa,stroke:#006064,stroke-width:2px

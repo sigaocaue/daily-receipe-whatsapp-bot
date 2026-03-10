@@ -144,6 +144,35 @@ class RecipeGeneratorService(ABC):
 
 Orquestra as entidades e servicos do dominio para executar processos de negocio completos.
 
+Use cases (ou Application Services no DDD) representam as ações que o sistema pode executar. Pensa assim: uma ação = algo que um usuário (ou o sistema) quer fazer.
+
+**Exemplos por domínio**
+
+**E-commerce**
+- `PlaceOrder` — cliente finaliza uma compra
+- `CancelOrder` — cliente cancela um pedido
+- `ApplyDiscountCoupon` — aplica cupom antes de pagar
+- `ProcessRefund` — devolve dinheiro após cancelamento
+
+**Blog / CMS**
+- `PublishPost` — autor publica um rascunho
+- `AddComment` — leitor comenta num post
+- `ModerateComment` — admin aprova ou rejeita comentário
+- `ArchivePost` — move post para arquivo
+
+**Sistema bancário**
+- `TransferMoney` — transfere entre contas
+- `PayBill` — paga uma conta
+- `BlockCard` — bloqueia cartão por suspeita de fraude
+- `GenerateStatement` — gera extrato do período
+
+**Teu projeto (daily-recipe-whatsapp-bot)**
+- `SendDailyRecipe` — sistema envia receita do dia via WhatsApp
+- `CreateRecipe` — admin cadastra uma receita nova
+- `ScheduleRecipe` — admin agenda qual receita vai para qual dia
+- `AddSubscriber` — cadastra número que vai receber as receitas
+- `UnsubscribeUser` — remove número da lista de envio
+
 **`use_cases/`** — Cada use case tem uma unica responsabilidade. Recebe dependencias por injecao no construtor e um DTO no metodo `execute()`:
 
 ```python

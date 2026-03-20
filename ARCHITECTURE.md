@@ -578,7 +578,7 @@ Cada um tem seu proprio ciclo de vida e pode evoluir independentemente.
 Cada use case faz **uma coisa**. `GenerateRecipeUseCase` gera receita. `SendRecipeUseCase` envia receita. Nao misture responsabilidades.
 
 ### Testes
-A Clean Architecture facilita testes unitarios: basta criar mocks das interfaces de repositorio/servico e testar os use cases isoladamente, sem banco de dados ou APIs externas.
+A Clean Architecture facilita testes unitários: basta criar mocks das interfaces de repositorio/servico e testar os use cases isoladamente, sem banco de dados ou APIs externas.
 
 ---
 
